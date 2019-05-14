@@ -2,7 +2,7 @@ import urllib.request as urllib2
 from bs4 import BeautifulSoup
 
 URL = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
-
+BASE_URL = 'http://ohhla.com/'
 
 def get_html(url):
     page = urllib2.urlopen(url)
@@ -54,3 +54,6 @@ def get_lyrics_raw(href):
         if text.index(line) != len(text)-1:
             lyrics += "\n"
     return lyrics
+
+
+#TODO: scrap lyrics from bigger artists e.g. Eminem or Tupac
