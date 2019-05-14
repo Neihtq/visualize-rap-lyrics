@@ -57,3 +57,11 @@ def get_lyrics_raw(href):
 
 
 #TODO: scrap lyrics from bigger artists e.g. Eminem or Tupac
+# - each album is stored in a <table> object
+# - there are always 2 more tables than listed albums
+def get_albums_big_artists(href)
+    soup = get_html(href)
+    dict_list = []
+    tables = soup.find_all("table")[2:]
+    
+
