@@ -77,3 +77,7 @@ def get_albums_big_artists(href):
         dict_list.append(stored_obj)
     return dict_list
 
+# TODO:
+# - program to scrape whole OHHLA page
+# - store in file and database
+# - sort and clean data
