@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 
 URL = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
 BASE_URL = 'http://ohhla.com/'
+AMAZON_REF_LINK = ' BUY NOW!\n'
 
 def get_html(url):
     page = urllib2.urlopen(url)
@@ -55,13 +56,24 @@ def get_lyrics_raw(href):
             lyrics += "\n"
     return lyrics
 
-
-#TODO: scrap lyrics from bigger artists e.g. Eminem or Tupac
-# - each album is stored in a <table> object
-# - there are always 2 more tables than listed albums
-def get_albums_big_artists(href)
+def get_albums_big_artists(href):
     soup = get_html(href)
     dict_list = []
     tables = soup.find_all("table")[2:]
-    
+    for t in tables:
+        links = t.find_all("a", href=True)[1:]
+        stored_obj = {}
+        header = t.find("th").text.replace(AMAZON_REF_LINK, '').split("-")
+        try:
+            title = header[1]
+        except IndexError:
+            title = header[0]
+
+        stored_obj["album"] = title
+        stored_obj["tracks"] = []
+        for a in links:
+            stored_obj["tracks"].append({'title': a.text, 'href': a['href']})
+
+        dict_list.append(stored_obj)
+    return dict_list
 
