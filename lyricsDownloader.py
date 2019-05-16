@@ -26,28 +26,6 @@ def get_rappers(soup):
         dict_list.append(stored_obj)
     return dict_list
 
-def get_dir_ftp(href):
-    soup = get_html(href)
-    links = soup.find_all('a', text=True)
-    dict_list = []
-    for a in links[5:]:
-        stored_obj = {}
-        stored_obj['album'] = a.text
-        stored_obj['href'] = a['href']
-        dict_list.append(stored_obj)
-    return dict_list
-
-def get_track_dir_ftp(href):
-    soup = get_html(href)
-    links = soup.find_all('a', text=True)
-    dict_list = []
-    for a in links[5:]:
-        stored_obj = {}
-        stored_obj['title'] = a.text
-        stored_obj['href'] = a['href']
-        dict_list.append(stored_obj)
-    return dict_list
-
 def get_lyrics_raw(href):
     soup = get_html(href)
     text = soup.text.splitlines()[5:]
@@ -79,40 +57,38 @@ def get_albums_big_artists(href):
         dict_list.append(stored_obj)
     return dict_list
 
-def write_lyrics_to_csv(db):
-    for url in URLs:
-        
-        soup = get_html(BASE_URL + URLs)
+def download_lyrics(db):
+    for url in URLs:   
+        soup = get_html(BASE_URL + url)
         rappers = get_rappers(soup)
-
         for artist in rappers:
-            name = artist.name
-            albums =
             if "html" in artist.href:
                 continue
             else:
-                albums = get_dir_ftp(artist.href)
-                for album in album:
-                    write_songtext(name, artist.href)
+                store_lyrics(artist.name, artist.href)
 
-def write_songtext(name, hrefs):    
-    # scrape all albums
+def scrape_ftp_page(href):
+    return get_html(href).find_all('a', text=True)[5:]
+
+def store_lyrics(name, hrefs):    
+    # FTP
     albums = []
+    titles = []
     for a in hrefs:
-        soup = get_html(a)
-        albums = soup.find_all('a', text=True)[5:]
+        albums = scrape_ftp_page(a)
 
-    for t in tracks:
-        soup = get_html(t)
-        # TODO
+    for album in albums:
+        titles = scrape_ftp_page(album)
 
-    with open(csv_file, 'a') as f:
-        w = csv.DictWriter(f, KEYS)
-        w.writerow(my_dict)
+    for title in titles:
+        row_dict = { "title": title.text, "artist": name, "release": "", "lyrics": get_lyrics_raw(title) } 
+        with open(csv_file, 'a') as f:
+            w = csv.DictWriter(f, KEYS)
+            w.writerow(row_dict)
 
 
 # TODO:
+# - Test functions
 # - program to scrape whole OHHLA page
-# - store in file and database
+# - program to scrape big artists pages to csv
 # - sort and clean data
-# - Change dict structure
