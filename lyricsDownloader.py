@@ -3,9 +3,10 @@ from bs4 import BeautifulSoup
 import csv, panda
 
 URLs = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
+KEYS = ["title", "artist", "album", "release", "lyrics"]
 BASE_URL = 'http://ohhla.com/'
-
 AMAZON_REF_LINK = ' BUY NOW!\n'
+csv_file = 'ohhla.csv'
 
 def get_html(url):
     page = urllib2.urlopen(url)
@@ -42,7 +43,7 @@ def get_track_dir_ftp(href):
     dict_list = []
     for a in links[5:]:
         stored_obj = {}
-        stored_obj['album'] = a.text
+        stored_obj['title'] = a.text
         stored_obj['href'] = a['href']
         dict_list.append(stored_obj)
     return dict_list
@@ -94,11 +95,19 @@ def write_lyrics_to_csv(db):
                 for album in album:
                     write_songtext(name, artist.href)
 
-def write_songtext(name, href):
-    fieldnames = ["title", "artist", "album", "release", "lyrics"]
-    with open('ohhla.csv', 'a') as f:
-        w = csv.DictWriter(f, list(.keys()))
-        w.writeheader()
+def write_songtext(name, hrefs):    
+    # scrape all albums
+    albums = []
+    for a in hrefs:
+        soup = get_html(a)
+        albums = soup.find_all('a', text=True)[5:]
+
+    for t in tracks:
+        soup = get_html(t)
+        # TODO
+
+    with open(csv_file, 'a') as f:
+        w = csv.DictWriter(f, KEYS)
         w.writerow(my_dict)
 
 
@@ -107,4 +116,3 @@ def write_songtext(name, href):
 # - store in file and database
 # - sort and clean data
 # - Change dict structure
-# title artist  album   release    lyrics
