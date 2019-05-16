@@ -1,15 +1,16 @@
 import urllib.request as urllib2
 from bs4 import BeautifulSoup
+import csv, panda
 
-URL = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
+URLs = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
 BASE_URL = 'http://ohhla.com/'
+
 AMAZON_REF_LINK = ' BUY NOW!\n'
 
 def get_html(url):
     page = urllib2.urlopen(url)
     soup = BeautifulSoup(page, 'html.parser')
-    return soup
-
+    return soup        
 
 def get_rappers(soup):
     ''' store name and url of artis in a dicitonary
@@ -77,7 +78,33 @@ def get_albums_big_artists(href):
         dict_list.append(stored_obj)
     return dict_list
 
+def write_lyrics_to_csv(db):
+    for url in URLs:
+        
+        soup = get_html(BASE_URL + URLs)
+        rappers = get_rappers(soup)
+
+        for artist in rappers:
+            name = artist.name
+            albums =
+            if "html" in artist.href:
+                continue
+            else:
+                albums = get_dir_ftp(artist.href)
+                for album in album:
+                    write_songtext(name, artist.href)
+
+def write_songtext(name, href):
+    fieldnames = ["title", "artist", "album", "release", "lyrics"]
+    with open('ohhla.csv', 'a') as f:
+        w = csv.DictWriter(f, list(.keys()))
+        w.writeheader()
+        w.writerow(my_dict)
+
+
 # TODO:
 # - program to scrape whole OHHLA page
 # - store in file and database
 # - sort and clean data
+# - Change dict structure
+# title artist  album   release    lyrics

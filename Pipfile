@@ -9,6 +9,7 @@ pylint = "*"
 [packages]
 requests = "*"
 beautifulsoup4 = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.7"
