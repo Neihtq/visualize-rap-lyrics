@@ -8,6 +8,10 @@ BASE_URL = 'http://ohhla.com/'
 AMAZON_REF_LINK = ' BUY NOW!\n'
 csv_file = 'ohhla.csv'
 
+with open(csv_file, 'w') as f:
+    w = csv.DictWriter(f, KEYS)
+    w.writeheader()
+
 def get_html(url):
     page = urllib2.urlopen(url)
     soup = BeautifulSoup(page, 'html.parser')
@@ -27,6 +31,7 @@ def get_rappers(soup):
     return dict_list
 
 def get_lyrics_raw(href):
+    print(href)
     soup = get_html(href)
     text = soup.text.splitlines()[5:]
     lyrics = ""
@@ -68,24 +73,25 @@ def download_lyrics(db):
                 store_lyrics(artist.name, artist.href)
 
 def scrape_ftp_page(href):
+    print(href)
     url = BASE_URL + href
+    print(url)
     return get_html(url).find_all('a', text=True)[5:]
 
-def store_lyrics(name, hrefs):    
+def store_lyrics(name, href):    
     # FTP
     albums = []
     titles = []
-    for a in hrefs:
-        albums = scrape_ftp_page(a)
+    albums = scrape_ftp_page(href)
 
     for album in albums:
-        titles = scrape_ftp_page(album)
-
-    for title in titles:
-        row_dict = { "title": title.text, "artist": name, "release": "", "lyrics": get_lyrics_raw(title) } 
-        with open(csv_file, 'a') as f:
-            w = csv.DictWriter(f, KEYS)
-            w.writerow(row_dict)
+        url = href + album['href']
+        titles = scrape_ftp_page(url)
+        for title in titles:
+            row_dict = { "title": title.text, "album": album.text, "artist": name, "release": "", "lyrics": get_lyrics_raw(BASE_URL + url + title['href']) } 
+            with open(csv_file, 'a') as f:
+                w = csv.DictWriter(f, KEYS)
+                w.writerow(row_dict)
 
 
 # TODO:
@@ -93,3 +99,6 @@ def store_lyrics(name, hrefs):
 # - program to scrape whole OHHLA page
 # - program to scrape big artists pages to csv
 # - sort and clean data
+# - remove header for lyrics column
+# - trim ".txt" from title
+# - trim "/" from album
