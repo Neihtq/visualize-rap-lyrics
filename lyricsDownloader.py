@@ -68,7 +68,8 @@ def download_lyrics(db):
                 store_lyrics(artist.name, artist.href)
 
 def scrape_ftp_page(href):
-    return get_html(href).find_all('a', text=True)[5:]
+    url = BASE_URL + href
+    return get_html(url).find_all('a', text=True)[5:]
 
 def store_lyrics(name, hrefs):    
     # FTP
