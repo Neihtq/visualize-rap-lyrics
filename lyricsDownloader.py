@@ -1,6 +1,6 @@
 import urllib.request as urllib2
 from bs4 import BeautifulSoup
-import csv, panda
+import csv
 
 URLs = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
 KEYS = ["title", "artist", "album", "release", "lyrics"]
