@@ -2,24 +2,26 @@ import urllib.request as urllib2
 from bs4 import BeautifulSoup
 import csv
 
+# TODO:
+# - Test functions
+# - program to scrape whole OHHLA page
+# - program to scrape big artists pages to csv
+# - sort and clean data (Maybe do with excel)
+
 URLs = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
 KEYS = ["title", "artist", "album", "release", "lyrics"]
 BASE_URL = 'http://ohhla.com/'
 AMAZON_REF_LINK = ' BUY NOW!\n'
 csv_file = 'ohhla.csv'
 
-with open(csv_file, 'w') as f:
-    w = csv.DictWriter(f, KEYS)
-    w.writeheader()
 
 def get_html(url):
     page = urllib2.urlopen(url)
     soup = BeautifulSoup(page, 'html.parser')
     return soup        
 
+
 def get_rappers(soup):
-    ''' store name and url of artis in a dicitonary
-    returns list of dictionaries'''
     pre = soup.find('pre')
     artists = pre.find_all('a', href=True)
     dict_list = []
@@ -30,16 +32,18 @@ def get_rappers(soup):
         dict_list.append(stored_obj)
     return dict_list
 
-def get_lyrics_raw(href):
+
+def get_lyrics(href):
     print(href)
     soup = get_html(href)
-    text = soup.text.splitlines()[5:]
+    text = soup.text.splitlines()[39:]
     lyrics = ""
     for line in text:
         lyrics += line
         if text.index(line) != len(text)-1:
             lyrics += "\n"
     return lyrics
+
 
 def get_albums_big_artists(href):
     soup = get_html(href)
@@ -53,52 +57,51 @@ def get_albums_big_artists(href):
             title = header[1]
         except IndexError:
             title = header[0]
-
         stored_obj["album"] = title
-        stored_obj["tracks"] = []
-        for a in links:
-            stored_obj["tracks"].append({'title': a.text, 'href': a['href']})
-
+        stored_obj["tracks"] = [{'title': a.text, 'href': a['href']} for a in links]
         dict_list.append(stored_obj)
     return dict_list
 
+
 def download_lyrics(db):
+    with open(csv_file, 'w') as f:
+        w = csv.DictWriter(f, KEYS)
+        w.writeheader()
+
+    rappers = []
     for url in URLs:   
         soup = get_html(BASE_URL + url)
         rappers = get_rappers(soup)
-        for artist in rappers:
-            if "html" in artist.href:
-                continue
-            else:
-                store_lyrics(artist.name, artist.href)
+
+    albums_big_artists = []
+    for artist in rappers:
+        if "html" in artist.href:
+            albums_big_artists = get_albums_big_artists(BASE_URL + artist.href)
+            store_lyrics_of_big_artist(artist.name, albums_big_artists)
+        else:
+            store_lyrics(artist.name, artist.href)
+
+
+def store_lyrics_of_big_artist(name, albums):
+    '''list of dicts
+        keys: [album, tracks: [title, href]]'''
+    for album in albums:
+
+
+
 
 def scrape_ftp_page(href):
-    print(href)
     url = BASE_URL + href
-    print(url)
     return get_html(url).find_all('a', text=True)[5:]
 
-def store_lyrics(name, href):    
-    # FTP
-    albums = []
-    titles = []
-    albums = scrape_ftp_page(href)
 
+def store_lyrics(name, href):
+    albums = scrape_ftp_page(href)
     for album in albums:
         url = href + album['href']
         titles = scrape_ftp_page(url)
         for title in titles:
-            row_dict = { "title": title.text, "album": album.text, "artist": name, "release": "", "lyrics": get_lyrics_raw(BASE_URL + url + title['href']) } 
+            row_dict = {"title": title.text[:-4], "album": album.text[:-1], "artist": name, "release": "", "lyrics": get_lyrics(BASE_URL + url + title['href'])}
             with open(csv_file, 'a') as f:
                 w = csv.DictWriter(f, KEYS)
                 w.writerow(row_dict)
-
-
-# TODO:
-# - Test functions
-# - program to scrape whole OHHLA page
-# - program to scrape big artists pages to csv
-# - sort and clean data
-# - remove header for lyrics column
-# - trim ".txt" from title
-# - trim "/" from album
