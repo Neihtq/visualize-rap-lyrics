@@ -1,15 +1,16 @@
-import urllib.request as urllib2
 from bs4 import BeautifulSoup
-import csv
+import urllib.request as urllib2
+import csv, re
 
 # TODO:
-# - Test functions
+# - Test all functions
 # - program to scrape whole OHHLA page
-# - program to scrape big artists pages to csv
 # - sort and clean data (Maybe do with excel)
+# - get_release-year_from_album(): add case with "/"
+
 
 URLs = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
-KEYS = ["title", "artist", "album", "release", "lyrics"]
+KEYS = ["title", "artist", "album", "release_year", "release_month", "lyrics"]
 BASE_URL = 'http://ohhla.com/'
 AMAZON_REF_LINK = ' BUY NOW!\n'
 csv_file = 'ohhla.csv'
@@ -34,7 +35,6 @@ def get_rappers(soup):
 
 
 def get_lyrics(href):
-    print(href)
     soup = get_html(href)
     text = soup.text.splitlines()[39:]
     lyrics = ""
@@ -83,11 +83,23 @@ def download_lyrics(db):
 
 
 def store_lyrics_of_big_artist(name, albums):
-    '''list of dicts
-        keys: [album, tracks: [title, href]]'''
     for album in albums:
+        tracks = album['tracks']
+        for track in tracks:
+            url = BASE_URL + track['href']
+            release = get_release_year_from_album(album)[0], get_release_year_from_album(album)[1]
+            write_to_csv(track['title'], album, name, release, get_lyrics(url))
 
 
+def get_release_year_from_album(title):
+    reg = r'([A-Z][a-z]+\.*\s)*(1|2)[0-9]+'
+    release = re.search(reg, title)
+    if release != None:
+        release = release.group()
+        if len(release.split()) > 1:
+            return (release.split()[0], release.split()[1])
+        return ("", release)
+    return ("", "")
 
 
 def scrape_ftp_page(href):
@@ -101,7 +113,11 @@ def store_lyrics(name, href):
         url = href + album['href']
         titles = scrape_ftp_page(url)
         for title in titles:
-            row_dict = {"title": title.text[:-4], "album": album.text[:-1], "artist": name, "release": "", "lyrics": get_lyrics(BASE_URL + url + title['href'])}
-            with open(csv_file, 'a') as f:
-                w = csv.DictWriter(f, KEYS)
-                w.writerow(row_dict)
+            write_to_csv(title.text[:-4], album.text[:-1], name, ("",""), get_lyrics(BASE_URL + url + title['href']))
+                
+
+def write_to_csv(title, album, artist, release, lyrics):
+    row_dict = {"title": title, "album": album, "artist": artist, "release_year": release[1], "release_month": release[0], "lyrics": lyrics}
+    with open(csv_file, 'a') as f:
+        w = csv.DictWriter(f, KEYS)
+        w.writerow(row_dict)
