@@ -7,6 +7,7 @@ import csv, re
 # - program to scrape whole OHHLA page
 # - sort and clean data (Maybe do with excel)
 # - get_release-year_from_album(): add case with "/"
+# - big artists: stript name and release from album title
 
 
 URLs = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
@@ -92,7 +93,7 @@ def store_lyrics_of_big_artist(name, albums):
 
 
 def get_release_year_from_album(title):
-    reg = r'([A-Z][a-z]+\.*\s)*(1|2)[0-9]+'
+    reg = r'([A-Z][a-z]+\.*\s)*(1|2)[0-9]+(\/[1|2][0-9]+)*'
     release = re.search(reg, title)
     if release != None:
         release = release.group()

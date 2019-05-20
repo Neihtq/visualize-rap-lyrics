@@ -19,6 +19,15 @@ if __name__ == "__main__":
     for test in test_lines:
         print(get_release_year_from_album(test))
     
-    # Test store_lyrics_of_big_artist: includes
-    
-
+    # Test store_lyrics_of_big_artist: includes get_albums_big_artists()
+    start = timeit.default_timer()
+    name = "Eminem"
+    url = "http://ohhla.com/YFA_eminem.html"
+    albums = get_albums_big_artists(url)
+    stop = timeit.default_timer()
+    print('Time in sec: ', stop - start) 
+    print("finished get_albums_big_artists()")
+    store_lyrics_of_big_artist(name, albums)
+    stop = timeit.default_timer()
+    print('Time in sec: ', stop - start) 
+    print("finished store_lyrics_of_big_artists()")
