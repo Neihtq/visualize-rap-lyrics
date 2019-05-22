@@ -104,16 +104,23 @@ def scrape_ftp_page(href):
     try:
         return get_html(url).find_all('a', text=True)[5:]
     except:
-        print("exception at with " + url)
+        print("exception at with ", url)
 
 
 def store_lyrics(name, href):
     albums = scrape_ftp_page(href)
-    for album in albums:
-        url = href + album['href']
-        titles = scrape_ftp_page(url)
-        for title in titles:
-            write_to_csv(title.text[:-4], album.text[:-1], name, ("", ""), get_lyrics(BASE_URL + url + title['href']))
+
+    if name is 'YT Cracker':
+        albums = scrape_ftp_page("anonymous/YT_crack/")
+
+    try:
+        for album in albums:
+            url = href + album['href']
+            titles = scrape_ftp_page(url)
+            for title in titles:
+                write_to_csv(title.text[:-4], album.text[:-1], name, ("", ""), get_lyrics(BASE_URL + url + title['href']))
+    except:
+        print("Error at store_lyirics with ", name, href, albums)
                 
 
 def write_to_csv(title, album, artist, release, lyrics):
