@@ -4,9 +4,9 @@ import csv
 import re
 
 # TODO:
+# - optimize runtime
 # - sort and clean data (Maybe do with excel)
 # - big artists: strip name and release from album title
-
 
 URLs = ['all.html', 'all_two.html', 'all_three.html', 'all_four.html', 'all_five.html']
 KEYS = ["title", "artist", "album", "release_year", "release_month", "lyrics"]
@@ -110,8 +110,9 @@ def scrape_ftp_page(href):
 def store_lyrics(name, href):
     albums = scrape_ftp_page(href)
 
-    if name is 'YT Cracker':
-        albums = scrape_ftp_page("anonymous/YT_crack/")
+    if "YT Cracker" in name:
+        href = "anonymous/YT_crack/"
+        albums = scrape_ftp_page(href)
 
     try:
         for album in albums:
@@ -120,7 +121,7 @@ def store_lyrics(name, href):
             for title in titles:
                 write_to_csv(title.text[:-4], album.text[:-1], name, ("", ""), get_lyrics(BASE_URL + url + title['href']))
     except:
-        print("Error at store_lyirics with ", name, href, albums)
+        print("Error at store_lyrics with ", name, )
                 
 
 def write_to_csv(title, album, artist, release, lyrics):
