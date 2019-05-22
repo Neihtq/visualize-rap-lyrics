@@ -101,17 +101,14 @@ def get_release_year_from_album(title):
 
 def scrape_ftp_page(href):
     url = BASE_URL + href
-    try:
-        return get_html(url).find_all('a', text=True)[5:]
-    except:
-        print("exception at with ", url)
+    return get_html(url).find_all('a', text=True)[5:]
 
 
 def store_lyrics(name, href):
-    albums = scrape_ftp_page(href)
-
     if "YT Cracker" in name:
         href = "anonymous/YT_crack/"
+        albums = scrape_ftp_page(href)
+    else:
         albums = scrape_ftp_page(href)
 
     try:
