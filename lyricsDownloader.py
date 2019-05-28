@@ -4,6 +4,7 @@ import csv
 import re
 
 # TODO:
+# - albu big artist: remove undesired urls
 # - sort and clean data (Maybe do with excel)
 # - big artists: strip name and release from album title
 
@@ -25,7 +26,7 @@ def scrape():
             if "YT Cracker" in key:
                 value = "anonymous/YT_crack/"
             if "Al Kapone" in key:
-                value = "anonymous/alkapone"
+                value = "anonymous/alkapone/"
             url = BASE_URL + value
             try:
                 soup = get_html(url)
@@ -117,8 +118,11 @@ def get_release_year_from_album(title):
 
 
 def scrape_ftp_page(href):
-    url = BASE_URL + href
-    return get_html(url).find_all('a', text=True)[5:]
+    url = href
+    try:
+        return get_html(url).find_all('a', text=True)[5:]
+    except:
+        print("problem with url ", url)
                 
 
 def write_to_csv(title, album, artist, release, lyrics):
