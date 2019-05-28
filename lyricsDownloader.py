@@ -15,21 +15,52 @@ AMAZON_REF_LINK = ' BUY NOW!\n'
 csv_file = 'ohhla.csv'
 
 
+def scrape():
+    for url in URLs:
+        
+        artist_obj = get_rappers(BASE_URL + url)
+        
+        small_artists = {}
+        big_artists = {}
+        for key, value in artist_obj:
+            if "YT Cracker" in key:
+                value = "anonymous/YT_crack/"
+            url = BASE_URL + value
+            soup = get_html(url)
+            if 'html' in value:
+                big_artists[key] = { "album": soup.find_all("table")[2:], "url": url}
+            else:
+                small_artists[key] = { "album": soup.find_all('a', text=True)[5:], "url": url}
+        
+        tmp = get_albums_small_artists(small_artists)
+        albums = tmp[0]
+        album_artist = tmp[1]
+
+        albums_release = get_albums_big_artists(big_artists, albums, album_artist)
+
+        for key, value in albums:
+            for track in value["tracks"]:
+                url = BASE_URL + value["url"] + track["href"]
+                lyric = get_lyrics(url)
+                write_to_csv(track.text, key, album_artist[key], albums_release[key], lyric)
+            
+
+
 def get_html(url):
     page = urllib2.urlopen(url)
     soup = BeautifulSoup(page, 'html.parser')
     return soup        
 
 
-def get_rappers(soup):
+def get_rappers(url):
+    soup = get_html(url)
     pre = soup.find('pre')
     artists = pre.find_all('a', href=True)
-    dict_list = []
+    artist_obj = {}
     for a in artists:
-        stored_obj = {'name': a.text, 'href': a['href']}
-        dict_list.append(stored_obj)
-    return dict_list
-
+        name = a.text
+        artist_obj[name] = a['href']
+    return artist_obj
 
 def get_lyrics(href):
     soup = get_html(href)
@@ -42,22 +73,33 @@ def get_lyrics(href):
     return lyrics
 
 
-def get_albums_big_artists(href):
-    soup = get_html(href)
-    dict_list = []
-    tables = soup.find_all("table")[2:]
-    for t in tables:
-        links = t.find_all("a", href=True)[1:]
-        stored_obj = {}
-        header = t.find("th").text.replace(AMAZON_REF_LINK, '').split("-")
-        try:
-            title = header[1]
-        except IndexError:
-            title = header[0]
-        stored_obj["album"] = title
-        stored_obj["tracks"] = [{'title': a.text, 'href': a['href']} for a in links]
-        dict_list.append(stored_obj)
-    return dict_list
+def get_albums_small_artists(artists):
+    albums = {}
+    album_artist = {}
+    for key, value in artists:
+        for a in value["album"]:
+            url = value["url"] + a["href"]
+            titles = scrape_ftp_page(url)
+            albums[a.text] = {"tracks": titles, "url": url}
+            album_artist[a.text] = key
+    return albums, album_artist
+
+
+def get_albums_big_artists(big_artists, albums, album_artist):
+    albums_release = {}
+    for key, value in big_artists:
+        for table in value["album"]:
+            links = table.find_all('a', href=True)[1:]
+            header = table.find("th").text.replace(AMAZON_REF_LINK, '').split("-")
+            try:
+                title = header[1]
+            except IndexError:
+                title = header[0]
+            release = get_release_year_from_album(title)[0], get_release_year_from_album(title)[1]
+            albums_release[title] = release
+            albums[title] = {"tracks":links, "url": ""}
+            album_artist[title] = key
+    return albums_release
 
 
 def download_lyrics():
