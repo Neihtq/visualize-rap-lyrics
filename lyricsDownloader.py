@@ -5,6 +5,7 @@ import re
 
 # TODO:
 # - albu big artist: remove undesired urls
+# - album big artists: investigate nonworking url
 # - sort and clean data (Maybe do with excel)
 # - big artists: strip name and release from album title
 
