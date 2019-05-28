@@ -1,0 +1,5 @@
+1. Scrape each page for alle artists
+    for each artist: store in a list with url
+2. for each artist+url:
+    scrape each album(=url) and store in a list
+3. 
