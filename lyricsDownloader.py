@@ -4,7 +4,6 @@ import csv
 import re
 
 # TODO:
-# - optimize runtime
 # - sort and clean data (Maybe do with excel)
 # - big artists: strip name and release from album title
 
@@ -22,28 +21,32 @@ def scrape():
         
         small_artists = {}
         big_artists = {}
-        for key, value in artist_obj:
+        for key, value in artist_obj.items():
             if "YT Cracker" in key:
                 value = "anonymous/YT_crack/"
+            if "Al Kapone" in key:
+                value = "anonymous/alkapone"
             url = BASE_URL + value
-            soup = get_html(url)
-            if 'html' in value:
-                big_artists[key] = { "album": soup.find_all("table")[2:], "url": url}
-            else:
-                small_artists[key] = { "album": soup.find_all('a', text=True)[5:], "url": url}
-        
+            try:
+                soup = get_html(url)
+                if 'html' in value:
+                    big_artists[key] = { "album": soup.find_all("table")[2:], "url": url}
+                else:
+                    small_artists[key] = { "album": soup.find_all('a', text=True)[5:], "url": url}
+            except:
+                print("problem with ", url)
+
         tmp = get_albums_small_artists(small_artists)
         albums = tmp[0]
         album_artist = tmp[1]
 
         albums_release = get_albums_big_artists(big_artists, albums, album_artist)
 
-        for key, value in albums:
+        for key, value in albums.items():
             for track in value["tracks"]:
                 url = BASE_URL + value["url"] + track["href"]
                 lyric = get_lyrics(url)
                 write_to_csv(track.text, key, album_artist[key], albums_release[key], lyric)
-            
 
 
 def get_html(url):
@@ -76,7 +79,7 @@ def get_lyrics(href):
 def get_albums_small_artists(artists):
     albums = {}
     album_artist = {}
-    for key, value in artists:
+    for key, value in artists.items():
         for a in value["album"]:
             url = value["url"] + a["href"]
             titles = scrape_ftp_page(url)
@@ -87,7 +90,7 @@ def get_albums_small_artists(artists):
 
 def get_albums_big_artists(big_artists, albums, album_artist):
     albums_release = {}
-    for key, value in big_artists:
+    for key, value in big_artists.items():
         for table in value["album"]:
             links = table.find_all('a', href=True)[1:]
             header = table.find("th").text.replace(AMAZON_REF_LINK, '').split("-")
@@ -100,34 +103,6 @@ def get_albums_big_artists(big_artists, albums, album_artist):
             albums[title] = {"tracks":links, "url": ""}
             album_artist[title] = key
     return albums_release
-
-
-def download_lyrics():
-    with open(csv_file, 'w') as f:
-        w = csv.DictWriter(f, KEYS)
-        w.writeheader()
-
-    rappers = []
-    for url in URLs:   
-        soup = get_html(BASE_URL + url)
-        rappers = get_rappers(soup)
-
-    for artist in rappers:
-        if 'html' in artist['href']:
-            albums_big_artists = get_albums_big_artists(BASE_URL + artist['href'])
-            store_lyrics_of_big_artist(artist['name'], albums_big_artists)
-        else:
-            store_lyrics(artist['name'], artist['href'])
-
-
-def store_lyrics_of_big_artist(name, albums):
-    for album in albums:
-        tracks = album['tracks']
-        for track in tracks:
-            url = BASE_URL + track['href']
-            album_title = album['album']
-            release = get_release_year_from_album(album_title)[0], get_release_year_from_album(album_title)[1]
-            write_to_csv(track['title'], album_title, name, release, get_lyrics(url))
 
 
 def get_release_year_from_album(title):
@@ -144,23 +119,6 @@ def get_release_year_from_album(title):
 def scrape_ftp_page(href):
     url = BASE_URL + href
     return get_html(url).find_all('a', text=True)[5:]
-
-
-def store_lyrics(name, href):
-    if "YT Cracker" in name:
-        href = "anonymous/YT_crack/"
-        albums = scrape_ftp_page(href)
-    else:
-        albums = scrape_ftp_page(href)
-
-    try:
-        for album in albums:
-            url = href + album['href']
-            titles = scrape_ftp_page(url)
-            for title in titles:
-                write_to_csv(title.text[:-4], album.text[:-1], name, ("", ""), get_lyrics(BASE_URL + url + title['href']))
-    except:
-        print("Error at store_lyrics with ", name, )
                 
 
 def write_to_csv(title, album, artist, release, lyrics):
