@@ -4,8 +4,8 @@ import csv
 import re
 
 # TODO:
+# - very slow??
 # - albu big artist: remove undesired urls
-# - album big artists: investigate nonworking url
 # - sort and clean data (Maybe do with excel)
 # - big artists: strip name and release from album title
 
@@ -38,18 +38,18 @@ def scrape():
             except:
                 print("problem with ", url)
 
-        tmp = get_albums_small_artists(small_artists)
-        albums = tmp[0]
-        album_artist = tmp[1]
-
-        albums_release = get_albums_big_artists(big_artists, albums, album_artist)
+        albums = {}
+        album_artist = {}
+        albums_release = {}
+        get_albums_small_artists(small_artists, albums, album_artist, albums_release)
+        get_albums_big_artists(big_artists, albums, album_artist, albums_release)
 
         for key, value in albums.items():
             for track in value["tracks"]:
-                url = BASE_URL + value["url"] + track["href"]
+                url = value["url"] + track["href"]
+
                 lyric = get_lyrics(url)
                 write_to_csv(track.text, key, album_artist[key], albums_release[key], lyric)
-
 
 def get_html(url):
     page = urllib2.urlopen(url)
@@ -78,20 +78,20 @@ def get_lyrics(href):
     return lyrics
 
 
-def get_albums_small_artists(artists):
-    albums = {}
-    album_artist = {}
+def get_albums_small_artists(artists, albums, album_artist, albums_release):
     for key, value in artists.items():
         for a in value["album"]:
             url = value["url"] + a["href"]
-            titles = scrape_ftp_page(url)
-            albums[a.text] = {"tracks": titles, "url": url}
-            album_artist[a.text] = key
-    return albums, album_artist
+            try:
+                titles = scrape_ftp_page(url)
+                albums[a.text] = {"tracks": titles, "url": url}
+                album_artist[a.text] = key
+                albums_release[a.text] = ("", "")
+            except:
+                    print("problem with url ", url, key)
 
 
-def get_albums_big_artists(big_artists, albums, album_artist):
-    albums_release = {}
+def get_albums_big_artists(big_artists, albums, album_artist, albums_release):
     for key, value in big_artists.items():
         for table in value["album"]:
             links = table.find_all('a', href=True)[1:]
@@ -104,7 +104,6 @@ def get_albums_big_artists(big_artists, albums, album_artist):
             albums_release[title] = release
             albums[title] = {"tracks":links, "url": ""}
             album_artist[title] = key
-    return albums_release
 
 
 def get_release_year_from_album(title):
@@ -120,10 +119,7 @@ def get_release_year_from_album(title):
 
 def scrape_ftp_page(href):
     url = href
-    try:
-        return get_html(url).find_all('a', text=True)[5:]
-    except:
-        print("problem with url ", url)
+    return get_html(url).find_all('a', text=True)[5:]
                 
 
 def write_to_csv(title, album, artist, release, lyrics):
