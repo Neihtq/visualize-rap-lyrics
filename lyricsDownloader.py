@@ -17,6 +17,10 @@ csv_file = 'ohhla.csv'
 
 
 def scrape():
+    with open(csv_file, 'w') as f:
+        w = csv.DictWriter(f, KEYS)
+        w.writeheader()
+
     for url in URLs:
         
         artist_obj = get_rappers(BASE_URL + url)
@@ -132,4 +136,3 @@ def write_to_csv(title, album, artist, release, lyrics):
     with open(csv_file, 'a', encoding='utf-8') as f:
         w = csv.DictWriter(f, KEYS)
         w.writerow(row_dict)
-
